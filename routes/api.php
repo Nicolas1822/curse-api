@@ -20,7 +20,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::post('register', [AuthController::class, 'register']);
-
 Route::post('login', [AuthController::class, 'login']);
 
-Route::get('logout', [AuthController::class, 'logout']);
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('show', [AuthController::class, 'show']);
+    Route::patch('edit', [AuthController::class, 'edit']);
+    Route::delete('delete', [AuthController::class, 'destroy']);
+});
