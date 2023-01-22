@@ -9,6 +9,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use stdClass;
 use App\Http\Requests\AuthRequest;
+use App\Mail\MailController;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -38,41 +40,11 @@ class AuthController extends Controller
 
         return response()
             ->json([
-                'message_one' => 'Hi ' . $user->name,
+                'message' => 'Hi ' . $user->name,
                 'accessToken' => $token,
                 'token_type' => 'bearer',
                 'user' => $user,
             ]);
-    }
-
-    //Crud de usuarios
-    //Mostrar
-    public function show()
-    {
-        $user = User::all();
-        return response()
-            ->json(['user' => $user]);
-    }
-
-    //Actualizar
-    public function edit(Request $request)
-    {
-        $user = User::find($request->id);
-        $user->password = hash::make($request->password);
-        $user->save();
-        return [
-            'message' => 'password update',
-            'user' => $user
-        ];
-    }
-
-    //Eliminar
-    public function destroy(Request $request)
-    {
-        $user = User::find($request->id);
-        $user->delete();
-        return response()
-            ->json(['message' => 'User delete']);
     }
 
     public function logout(Request $request)
@@ -83,6 +55,24 @@ class AuthController extends Controller
             });
             return ['message' => 'session logout'];
         }
-        return ['message' => 'authenticate fail'];
+        return ['message' => 'authenticate fail']; //duda no muestra este mensaje
+    }
+
+    public function passwordRecovery(Request $request)
+    {
+        if ($user = User::find($request->id)) { //no permite la busqueda a traves de email, retorna null
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            $mail = new MailController($token, $user);
+            Mail::to($user->email)->send($mail);
+
+            return response()
+                ->json([
+                    'message' => 'Send message',
+                ]);
+        }
+        return [
+            'message' => 'user not found',
+        ];
     }
 }
